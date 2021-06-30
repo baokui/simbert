@@ -16,19 +16,20 @@ from bert4keras.snippets import sequence_padding
 from bert4keras.snippets import text_segmentate
 from bert4keras.snippets import AutoRegressiveDecoder
 from bert4keras.snippets import uniout
-
+import os
 # 基本信息
 maxlen = 32
 batch_size = 128
 steps_per_epoch = 1000
 epochs = 10000
-corpus_path = 'data_sample.json'
+corpus_path = '/search/odin/guobk/data/simcse/20210621/train_simbert.json'
 
 # bert配置
-config_path = '/root/kg/bert/chinese_L-12_H-768_A-12/bert_config.json'
-checkpoint_path = '/root/kg/bert/chinese_L-12_H-768_A-12/bert_model.ckpt'
-dict_path = '/root/kg/bert/chinese_L-12_H-768_A-12/vocab.txt'
+config_path = '/search/odin/guobk/data/model/chinese_L-12_H-768_A-12/bert_config.json'
+checkpoint_path = '/search/odin/guobk/data/model/chinese_L-12_H-768_A-12/bert_model.ckpt'
+dict_path = '/search/odin/guobk/data/model/chinese_L-12_H-768_A-12/vocab.txt'
 
+path_model = '/search/odin/guobk/data/my_simbert'
 # 加载并精简词表，建立分词器
 token_dict, keep_tokens = load_vocab(
     dict_path=dict_path,
@@ -229,11 +230,11 @@ class Evaluate(keras.callbacks.Callback):
         self.lowest = 1e10
 
     def on_epoch_end(self, epoch, logs=None):
-        model.save_weights('./latest_model.weights')
+        model.save_weights(os.path.join(path_model,'latest_model.weights'))
         # 保存最优
         if logs['loss'] <= self.lowest:
             self.lowest = logs['loss']
-            model.save_weights('./best_model.weights')
+            model.save_weights(os.path.join(path_model,'latest_model.weights'))
         # 演示效果
         just_show()
 
@@ -242,12 +243,13 @@ if __name__ == '__main__':
 
     train_generator = data_generator(read_corpus(), batch_size)
     evaluator = Evaluate()
-
+    checkpointer = keras.callbacks.ModelCheckpoint(os.path.join(path_model, 'model_{epoch:03d}.h5'),
+                                   verbose=1, save_weights_only=True, period=1)
     model.fit_generator(
         train_generator.forfit(),
         steps_per_epoch=steps_per_epoch,
         epochs=epochs,
-        callbacks=[evaluator]
+        callbacks=[checkpointer,evaluator]
     )
 
 else:
