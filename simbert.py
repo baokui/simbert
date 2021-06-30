@@ -74,12 +74,12 @@ class data_generator(DataGenerator):
             if len(self.some_samples) > 1000:
                 self.some_samples.pop(0)
             token_ids, segment_ids = tokenizer.encode(
-                text, synonym, max_length=maxlen * 2
+                text, synonym, maxlen=maxlen * 2
             )
             batch_token_ids.append(token_ids)
             batch_segment_ids.append(segment_ids)
             token_ids, segment_ids = tokenizer.encode(
-                synonym, text, max_length=maxlen * 2
+                synonym, text, maxlen=maxlen * 2
             )
             batch_token_ids.append(token_ids)
             batch_segment_ids.append(segment_ids)
@@ -163,7 +163,7 @@ class SynonymsGenerator(AutoRegressiveDecoder):
         return seq2seq.predict([token_ids, segment_ids])[:, -1]
 
     def generate(self, text, n=1, topk=5):
-        token_ids, segment_ids = tokenizer.encode(text, max_length=maxlen)
+        token_ids, segment_ids = tokenizer.encode(text, maxlen=maxlen)
         output_ids = self.random_sample([token_ids, segment_ids], n,
                                         topk)  # 基于随机采样
         return [tokenizer.decode(ids) for ids in output_ids]
@@ -253,5 +253,5 @@ if __name__ == '__main__':
     )
 
 else:
-
-    model.load_weights('./latest_model.weights')
+    pass
+    # model.load_weights('./latest_model.weights')
