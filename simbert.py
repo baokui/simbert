@@ -155,7 +155,7 @@ model.summary()
 class SynonymsGenerator(AutoRegressiveDecoder):
     """seq2seq解码器
     """
-    @AutoRegressiveDecoder.set_rtype('probas')
+    # @AutoRegressiveDecoder.set_rtype('probas')
     def predict(self, inputs, output_ids, step):
         token_ids, segment_ids = inputs
         token_ids = np.concatenate([token_ids, output_ids], 1)
