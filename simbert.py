@@ -18,6 +18,7 @@ from bert4keras.snippets import AutoRegressiveDecoder
 from bert4keras.snippets import uniout
 import os
 import random
+import sys
 # 基本信息
 maxlen = 32
 batch_size = 128
@@ -25,12 +26,16 @@ steps_per_epoch = 1000
 epochs = 10000
 corpus_path = '/search/odin/guobk/data/simcse/20210621/train_simbert.json'
 
-# bert配置
-config_path = '/search/odin/guobk/data/model/chinese_L-12_H-768_A-12/bert_config.json'
-checkpoint_path = '/search/odin/guobk/data/model/chinese_L-12_H-768_A-12/bert_model.ckpt'
-dict_path = '/search/odin/guobk/data/model/chinese_L-12_H-768_A-12/vocab.txt'
+bertmodel = 'chinese_simbert_L-4_H-312_A-12'
+path_model = '/search/odin/guobk/data/my_simbert_l4'
+bert_model,path_model = sys.argv[1:]
 
-path_model = '/search/odin/guobk/data/my_simbert'
+# bert配置
+config_path = '/search/odin/guobk/data/model/{}/bert_config.json'.format(bertmodel)
+checkpoint_path = '/search/odin/guobk/data/model/{}/bert_model.ckpt'.format(bertmodel)
+dict_path = '/search/odin/guobk/data/model/{}/vocab.txt'.format(bertmodel)
+
+
 # 加载并精简词表，建立分词器
 token_dict, keep_tokens = load_vocab(
     dict_path=dict_path,
