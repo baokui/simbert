@@ -17,6 +17,7 @@ from bert4keras.snippets import text_segmentate
 from bert4keras.snippets import AutoRegressiveDecoder
 from bert4keras.snippets import uniout
 import os
+import random
 # 基本信息
 maxlen = 32
 batch_size = 128
@@ -47,6 +48,9 @@ def read_corpus():
             for l in f:
                 yield json.loads(l)
 
+with open(corpus_path,'r') as f:
+    S = f.read().strip().split('\n')
+TrnData = [json.loads(f) for f in S]
 
 def truncate(text):
     """截断句子
@@ -61,7 +65,6 @@ class data_generator(DataGenerator):
     def __init__(self, *args, **kwargs):
         super(data_generator, self).__init__(*args, **kwargs)
         self.some_samples = []
-
     def __iter__(self, random=False):
         batch_token_ids, batch_segment_ids = [], []
         for is_end, d in self.sample(random):
@@ -99,7 +102,6 @@ class TotalLoss(Loss):
         self.add_metric(loss1, name='seq2seq_loss')
         self.add_metric(loss2, name='similarity_loss')
         return loss1 + loss2
-
     def compute_loss_of_seq2seq(self, inputs, mask=None):
         y_true, y_mask, _, y_pred = inputs
         y_true = y_true[:, 1:]  # 目标token_ids
@@ -108,7 +110,6 @@ class TotalLoss(Loss):
         loss = K.sparse_categorical_crossentropy(y_true, y_pred)
         loss = K.sum(loss * y_mask) / K.sum(y_mask)
         return loss
-
     def compute_loss_of_similarity(self, inputs, mask=None):
         _, _, y_pred, _ = inputs
         y_true = self.get_labels_of_similarity(y_pred)  # 构建标签
@@ -120,7 +121,6 @@ class TotalLoss(Loss):
             y_true, similarities, from_logits=True
         )
         return loss
-
     def get_labels_of_similarity(self, y_pred):
         idxs = K.arange(0, K.shape(y_pred)[0])
         idxs_1 = idxs[None, :]
@@ -156,12 +156,12 @@ class SynonymsGenerator(AutoRegressiveDecoder):
     """seq2seq解码器
     """
     # @AutoRegressiveDecoder.set_rtype('probas')
-    def predict(self, inputs, output_ids, step):
+    #def predict(self, inputs, output_ids, step):
+    def predict(self, inputs, output_ids, states=0, temperature=1, probas='p'):
         token_ids, segment_ids = inputs
         token_ids = np.concatenate([token_ids, output_ids], 1)
         segment_ids = np.concatenate([segment_ids, np.ones_like(output_ids)], 1)
-        return seq2seq.predict([token_ids, segment_ids])[:, -1]
-
+        return seq2seq.predict([token_ids, segment_ids])[:, -1],states
     def generate(self, text, n=1, topk=5):
         token_ids, segment_ids = tokenizer.encode(text, maxlen=maxlen)
         output_ids = self.random_sample([token_ids, segment_ids], n,
@@ -211,14 +211,24 @@ def gen_synonyms(text, n=100, k=20):
 def just_show():
     """随机观察一些样本的效果
     """
-    some_samples = train_generator.some_samples
-    S = [np.random.choice(some_samples) for i in range(3)]
+    # some_samples = train_generator.some_samples
+    # S = [np.random.choice(some_samples) for i in range(3)]
+    S = random.sample(TrnData, k=10)
     for s in S:
         try:
-            print(u'原句子：%s' % s)
+            print('###########################')
+            print('------------------')
+            print(u'原句子：%s' % s['text'])
             print(u'同义句子：')
-            print(gen_synonyms(s, 10, 10))
-            print()
+            r = gen_synonyms(s['text'], 10, 10)
+            for rr in r:
+                print(rr)
+            print('------------------')
+            print(u'原句子：%s' % s['synonyms'][0])
+            print(u'同义句子：')
+            r = gen_synonyms(s['synonyms'][0], 10, 10)
+            for rr in r:
+                print(rr)
         except:
             pass
 
@@ -238,7 +248,9 @@ class Evaluate(keras.callbacks.Callback):
         # 演示效果
         just_show()
 
-
+def test():
+    model.load_weights(os.path.join(path_model,'latest_model.weights'))
+    just_show()
 if __name__ == '__main__':
 
     train_generator = data_generator(read_corpus(), batch_size)
