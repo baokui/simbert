@@ -1,7 +1,19 @@
-from simbert import *
+from model import get_model
 import json
 import numpy as np
-model.load_weights(os.path.join(path_model,'model_069.h5'))
+path_models = ['/search/odin/guobk/data/my_simbert/latest_model.weights',\
+    '/search/odin/guobk/data/my_simbert_l4/latest_model.weights',\
+        '/search/odin/guobk/data/my_simber_l6/latest_model.weights']
+tags = ['simbert_12','simbert_4','simbert_6']
+bert_models = ['chinese_L-12_H-768_A-12','chinese_simbert_L-4_H-312_A-12']
+models = []
+seq2seqs = []
+encoders = []
+for i in range(len(bert_models)):  
+    model, seq2seq, encoder = get_model(bert_models[i])
+    model.load_weights(path_models[i])
+    models.append(model)
+    encoders.append(encoder)
 path_docs="/search/odin/guobk/data/bert_semantic/finetuneData_new_test/Docs.json"
 # path_queries="/search/odin/guobk/data/bert_semantic/finetuneData_new_test/Queries-test-0623.json"
 path_queries = "/search/odin/guobk/data/bert_semantic/finetuneData_new_test/test-0623.json"
@@ -10,7 +22,7 @@ with open(path_docs,'r') as f:
     D = json.load(f)
 with open(path_queries,'r') as f:
     Q = json.load(f)
-def emb(Sents, batch_size = 128):
+def emb(encoder,Sents, batch_size = 128):
     V = []
     i0 = 0
     i = 0
