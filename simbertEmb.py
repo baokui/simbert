@@ -62,5 +62,13 @@ for i in range(len(bert_models)):
         score = [s[j][ii] for ii in idx[j][:maxRec]]
         contents = [SentsD[ii] for ii in idx[j][:maxRec]]
         Queries[j][tags[i]] = [contents[k]+'\t%0.4f'%score[k] for k in range(len(score))]
+keys = ['input', 'clicks', 'rec_ori', 'rec_bert_cls_base', 'simbert_12-69', 'simbert_4']
+for d in Queries:
+    k0 = list(d.keys())
+    for k in k0:
+        if k not in keys:
+            del d[k]
 with open(path_target,'w') as f:
     json.dump(Queries,f,ensure_ascii=False,indent=4)
+
+encoders[1].save('/search/odin/guobk/data/my_simbert_l4/encoder_269.h5')
