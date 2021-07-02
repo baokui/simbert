@@ -40,7 +40,7 @@ def emb(encoder,Sents, batch_size = 128):
         i0 = i*batch_size
         i1 = (i+1)*batch_size
     return V
-maxRec = int(maxRec)
+maxRec = int(maxQ)
 Queries = Q[:maxRec]
 SentsQ = [d['input'] for d in Queries]
 SentsD = [d['content'] for d in D]
