@@ -17,29 +17,16 @@ with open(path_queries,'r') as f:
     Q = json.load(f)
 def emb(encoder,Sents, batch_size = 128):
     V = []
-    i0 = 0
-    i = 0
-    i0 = i*batch_size
-    i1 = (i+1)*batch_size
-    while i0<len(Sents):
-        r = Sents[i0:i1]
-        X, S = [], []
-        for t in r:
-            x, s = tokenizer.encode(t)
-            X.append(x)
-            S.append(s)
-        X = sequence_padding(X)
-        S = sequence_padding(S)
-        Z = encoder.predict([X, S])
-        Z /= (Z**2).sum(axis=1, keepdims=True)**0.5
-        if i==0:
-            V = Z
-        else:
-            V = np.concatenate((V,Z),axis=0)
-        i += 1
-        i0 = i*batch_size
-        i1 = (i+1)*batch_size
-    return V
+    X, S = [], []
+    for t in Sents:
+        x, s = tokenizer.encode(t)
+        X.append(x)
+        S.append(s)
+    X = sequence_padding(X)
+    S = sequence_padding(S)
+    Z = encoder.predict([X, S],verbose=True)
+    Z /= (Z**2).sum(axis=1, keepdims=True)**0.5
+    return Z
 maxRec = int(maxQ)
 Queries = Q[:maxRec]
 SentsQ = [d['input'] for d in Queries]
