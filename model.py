@@ -1,6 +1,7 @@
 from __future__ import print_function
 from bert4keras.models import build_transformer_model
 from bert4keras.tokenizers import Tokenizer, load_vocab
+import keras
 def get_model(bert_model):
     # bert配置
     config_path = '/search/odin/guobk/data/model/{}/bert_config.json'.format(bert_model)
