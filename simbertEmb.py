@@ -1,16 +1,17 @@
 from model import get_model
 import json
 import numpy as np
-path_models = ['/search/odin/guobk/data/my_simbert/latest_model.weights',\
-    '/search/odin/guobk/data/my_simbert_l4/latest_model.weights',\
+from bert4keras.snippets import sequence_padding
+path_models = ['/search/odin/guobk/data/my_simbert/model_069.h5',\
+    '/search/odin/guobk/data/my_simbert_l4/model_269.h5',\
         '/search/odin/guobk/data/my_simber_l6/latest_model.weights']
-tags = ['simbert_12','simbert_4','simbert_6']
+tags = ['simbert_12-69','simbert_4','simbert_6']
 bert_models = ['chinese_L-12_H-768_A-12','chinese_simbert_L-4_H-312_A-12']
 models = []
 seq2seqs = []
 encoders = []
 for i in range(len(bert_models)):  
-    model, seq2seq, encoder = get_model(bert_models[i])
+    model, seq2seq, encoder,tokenizer = get_model(bert_models[i])
     model.load_weights(path_models[i])
     models.append(model)
     encoders.append(encoder)
@@ -47,17 +48,19 @@ def emb(encoder,Sents, batch_size = 128):
         i0 = i*batch_size
         i1 = (i+1)*batch_size
     return V
-
-SentsQ = [d['input'] for d in Q]
-V_q = emb(SentsQ)
-SentsD = [d['content'] for d in D]
-V_d = emb(SentsD)
-s = V_q[:1000].dot(np.transpose(V_d))
-idx = np.argsort(-s,axis=-1)
 maxRec = 10
-for j in range(len(Queries)):
-    score = [s[j][ii] for ii in idx[j][:maxRec]]
-    contents = [SentsD[ii] for ii in idx[j][:maxRec]]
-    Queries[j]['rec_simbert'] = [contents[k]+'\t%0.4f'%score[k] for k in range(len(score))]
+Queries = Q[:50]
+SentsQ = [d['input'] for d in Queries]
+SentsD = [d['content'] for d in D]
+for i in range(len(bert_models)):
+    print(i)
+    V_q = emb(encoders[i],SentsQ)
+    V_d = emb(encoders[i],SentsD)
+    s = V_q.dot(np.transpose(V_d))
+    idx = np.argsort(-s,axis=-1)
+    for j in range(len(Queries)):
+        score = [s[j][ii] for ii in idx[j][:maxRec]]
+        contents = [SentsD[ii] for ii in idx[j][:maxRec]]
+        Queries[j][tags[i]] = [contents[k]+'\t%0.4f'%score[k] for k in range(len(score))]
 with open(path_target,'w') as f:
     json.dump(Queries,f,ensure_ascii=False,indent=4)

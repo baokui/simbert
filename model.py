@@ -65,4 +65,4 @@ def get_model(bert_model):
     # optimizer = AdamW(learning_rate=2e-6, weight_decay_rate=0.01)
     # model.compile(optimizer=optimizer)
     # model.summary()
-    return model, seq2seq, encoder
+    return model, seq2seq, encoder,tokenizer
