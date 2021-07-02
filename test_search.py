@@ -8,7 +8,7 @@ import sys
 #         '/search/odin/guobk/data/my_simber_l6/latest_model.weights']
 # tags = ['simbert_12-69','simbert_4','simbert_6']
 # bert_models = ['chinese_L-12_H-768_A-12','chinese_simbert_L-4_H-312_A-12']
-path_model,bert_model,tag,path_docs,path_queries,maxQ = sys.argv[1:]
+path_model,bert_model,tag,path_docs,path_queries,maxQ,path_target = sys.argv[1:]
 model, seq2seq, encoder,tokenizer = get_model(bert_model)
 model.load_weights(path_model)
 with open(path_docs,'r') as f:
