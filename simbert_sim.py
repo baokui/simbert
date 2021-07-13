@@ -106,7 +106,7 @@ class TotalLoss(Loss):
         loss2 = self.compute_loss_of_similarity(inputs, mask)
         self.add_metric(loss1, name='seq2seq_loss')
         self.add_metric(loss2, name='similarity_loss')
-        return loss2
+        return loss1 + loss2
     def compute_loss_of_seq2seq(self, inputs, mask=None):
         y_true, y_mask, _, y_pred = inputs
         y_true = y_true[:, 1:]  # 目标token_ids
