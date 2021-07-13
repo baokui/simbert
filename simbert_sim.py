@@ -102,19 +102,19 @@ class TotalLoss(Loss):
     """loss分两部分，一是seq2seq的交叉熵，二是相似度的交叉熵。
     """
     def compute_loss(self, inputs, mask=None):
-        #loss1 = self.compute_loss_of_seq2seq(inputs, mask)
+        loss1 = self.compute_loss_of_seq2seq(inputs, mask)
         loss2 = self.compute_loss_of_similarity(inputs, mask)
-        #self.add_metric(loss1, name='seq2seq_loss')
+        self.add_metric(loss1, name='seq2seq_loss')
         self.add_metric(loss2, name='similarity_loss')
-        return loss2
-    # def compute_loss_of_seq2seq(self, inputs, mask=None):
-    #     y_true, y_mask, _, y_pred = inputs
-    #     y_true = y_true[:, 1:]  # 目标token_ids
-    #     y_mask = y_mask[:, 1:]  # segment_ids，刚好指示了要预测的部分
-    #     y_pred = y_pred[:, :-1]  # 预测序列，错开一位
-    #     loss = K.sparse_categorical_crossentropy(y_true, y_pred)
-    #     loss = K.sum(loss * y_mask) / K.sum(y_mask)
-    #     return loss
+        return 0.0001*loss1 + loss2
+    def compute_loss_of_seq2seq(self, inputs, mask=None):
+        y_true, y_mask, _, y_pred = inputs
+        y_true = y_true[:, 1:]  # 目标token_ids
+        y_mask = y_mask[:, 1:]  # segment_ids，刚好指示了要预测的部分
+        y_pred = y_pred[:, :-1]  # 预测序列，错开一位
+        loss = K.sparse_categorical_crossentropy(y_true, y_pred)
+        loss = K.sum(loss * y_mask) / K.sum(y_mask)
+        return loss
     def compute_loss_of_similarity(self, inputs, mask=None):
         _, _, y_pred, _ = inputs
         y_true = self.get_labels_of_similarity(y_pred)  # 构建标签
