@@ -102,11 +102,11 @@ class TotalLoss(Loss):
     """loss分两部分，一是seq2seq的交叉熵，二是相似度的交叉熵。
     """
     def compute_loss(self, inputs, mask=None):
-        loss1 = self.compute_loss_of_seq2seq(inputs, mask)
+        #loss1 = self.compute_loss_of_seq2seq(inputs, mask)
         loss2 = self.compute_loss_of_similarity(inputs, mask)
-        self.add_metric(loss1, name='seq2seq_loss')
+        #self.add_metric(loss1, name='seq2seq_loss')
         self.add_metric(loss2, name='similarity_loss')
-        return loss1 + loss2
+        return loss2
     def compute_loss_of_seq2seq(self, inputs, mask=None):
         y_true, y_mask, _, y_pred = inputs
         y_true = y_true[:, 1:]  # 目标token_ids
