@@ -54,9 +54,9 @@ def read_corpus():
             for l in f:
                 yield json.loads(l)
 
-# with open(corpus_path,'r') as f:
-#     S = f.read().strip().split('\n')
-# TrnData = [json.loads(f) for f in S]
+with open(corpus_path,'r') as f:
+    S = f.read().strip().split('\n')
+TrnData = [json.loads(f) for f in S]
 
 def truncate(text):
     """截断句子
@@ -224,15 +224,15 @@ def just_show():
         try:
             print('###########################')
             print('------------------')
-            print(u'原句子：%s' % s['text'])
+            print(u'原句子：%s' % s['input'])
             print(u'同义句子：')
-            r = gen_synonyms(s['text'], 10, 10)
+            r = gen_synonyms(s['click'], 10, 10)
             for rr in r:
                 print(rr)
             print('------------------')
-            print(u'原句子：%s' % s['synonyms'][0])
+            print(u'原句子：%s' % s['click'][0])
             print(u'同义句子：')
-            r = gen_synonyms(s['synonyms'][0], 10, 10)
+            r = gen_synonyms(s['click'][0], 10, 10)
             for rr in r:
                 print(rr)
         except:
