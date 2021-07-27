@@ -51,7 +51,7 @@ class simbert_emb(object):
         V = []
         X, S = [], []
         for t in Sents:
-            x, s = tokenizer.encode(t)
+            x, s = self.tokenizer.encode(t)
             X.append(x)
             S.append(s)
         X = sequence_padding(X,length=maxlen)
@@ -59,3 +59,31 @@ class simbert_emb(object):
         Z = self.encoder.predict([X, S],verbose=True)
         Z /= (Z**2).sum(axis=1, keepdims=True)**0.5
         return Z
+def emb0():
+    model = simbert_emb()
+    path_data = '/search/odin/guobk/data/dabaigou/filtered/sorted-all-filter2-rand-0.95.txt'
+    with open(path_data,'r') as f:
+        S = f.read().strip().split('\n')
+    S = [[str(i)]+S[i].split('\t') for i in range(len(S))]
+    Sents = [s[1] for s in S]
+    V = model.emb(Sents)
+    D0 = {s[0]:s[1] for s in S}
+    R = [[S[i][0]]+["%0.8f"%t for t in list(V[i])] for i in range(len(S))]
+    R = ['\t'.join(r) for r in R]
+    with open('/search/odin/guobk/data/Content/dabaigou/Docs.json','w') as f:
+        json.dump(D0,f,ensure_ascii=False)
+    with open('/search/odin/guobk/data/Content/dabaigou/Docs.txt','w') as f:
+        f.write('\n'.join(R))
+    path_data = '/search/odin/guobk/data/AiWriter/Content/DataQuality/data_new/all/content-0-dedup0-post15-short.txt'
+    with open(path_data,'r') as f:
+        S = f.read().strip().split('\n')
+    S = [S[i].split('\t') for i in range(len(S))]
+    Sents = [s[1] for s in S]
+    V = model.emb(Sents)
+    D0 = {s[0]:s[1] for s in S}
+    R = [[S[i][0]]+["%0.8f"%t for t in list(V[i])] for i in range(len(S))]
+    R = ['\t'.join(r) for r in R]
+    with open('/search/odin/guobk/data/Content/prose/Docs.json','w') as f:
+        json.dump(D0,f,ensure_ascii=False)
+    with open('/search/odin/guobk/data/Content/prose/Docs.txt','w') as f:
+        f.write('\n'.join(R))

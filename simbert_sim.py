@@ -23,8 +23,9 @@ import sys
 maxlen = 32
 batch_size = 128
 steps_per_epoch = 1000
-epochs = 10000
-corpus_path = '/search/odin/guobk/data/simcse/20210621/train_simbert.json'
+epochs = 100
+alpha = 0.0001
+corpus_path = '/search/odin/guobk/data/Tab3_train/Q-all-0726.txt'
 
 bert_model = 'chinese_simbert_L-4_H-312_A-12'
 path_model = '/search/odin/guobk/data/my_simbert_l4_sim'
@@ -53,9 +54,9 @@ def read_corpus():
             for l in f:
                 yield json.loads(l)
 
-with open(corpus_path,'r') as f:
-    S = f.read().strip().split('\n')
-TrnData = [json.loads(f) for f in S]
+# with open(corpus_path,'r') as f:
+#     S = f.read().strip().split('\n')
+# TrnData = [json.loads(f) for f in S]
 
 def truncate(text):
     """截断句子
@@ -73,7 +74,7 @@ class data_generator(DataGenerator):
     def __iter__(self, random=False):
         batch_token_ids, batch_segment_ids = [], []
         for is_end, d in self.sample(random):
-            text, synonyms = d['text'], d['synonyms']
+            text, synonyms = d['input'], d['click']
             synonyms = [text] + synonyms
             np.random.shuffle(synonyms)
             text, synonym = synonyms[:2]
@@ -106,7 +107,7 @@ class TotalLoss(Loss):
         loss2 = self.compute_loss_of_similarity(inputs, mask)
         self.add_metric(loss1, name='seq2seq_loss')
         self.add_metric(loss2, name='similarity_loss')
-        return 0.0001*loss1 + loss2
+        return alpha*loss1 + loss2
     def compute_loss_of_seq2seq(self, inputs, mask=None):
         y_true, y_mask, _, y_pred = inputs
         y_true = y_true[:, 1:]  # 目标token_ids

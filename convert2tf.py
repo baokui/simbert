@@ -76,12 +76,13 @@ url = 'http://10.160.25.112:8501/v1/models/simbertSearch:predict'
 # url = 'http://tensorflow-bert-semantic.thanos.sogou/v1/models/bert_semantic_simcse:predict'
 # url = 'http://yunbiaoqing-tensorflow.thanos-lab.sogou/v1/models/bert_semantic_simcse:predict'
 # url = 'http://yunbiaoqing-tensorflow.thanos-lab.sogou/v1/models/bert_semantic_simcse:predict'
+url = 'http://yunbiaoqing-tensorflow.thanos-lab.sogou/v1/models/bert_semantic_simcse:predict'
 path_model = '/search/odin/guobk/data/my_simbert_l4/model_269.h5'
 bert_model = 'chinese_simbert_L-4_H-312_A-12'
 model, seq2seq, encoder,tokenizer = get_model(bert_model)
 model.load_weights(path_model)
 # encoder = keras.models.load_model('/search/odin/guobk/data/my_simbert_l4/encoder_269.h5',compile = False)
-sent = "可别昧着良心做事，"
+sent = "我爱你"
 V0,X,S = emb(encoder,sent)
 V0 = V0[0]
 x0 = [int(i) for i in list(X[0])]
