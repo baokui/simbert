@@ -28,13 +28,13 @@ alpha = 0.0001
 # corpus_path = '/search/odin/guobk/data/Tab3_train/Q-all-0726.txt'
 # bert_model = 'chinese_simbert_L-4_H-312_A-12'
 # path_model = '/search/odin/guobk/data/my_simbert_l4_sim'
-corpus_path,bert_model,path_model,init_ckpt = sys.argv[1:]
+corpus_path,bert_model,path_model,init_ckpt,config_path,dict_path = sys.argv[1:]
 
 # bert配置
-config_path = '/search/odin/guobk/data/model/{}/bert_config.json'.format(bert_model)
+# config_path = '/search/odin/guobk/data/model/{}/bert_config.json'.format(bert_model)
 # checkpoint_path = '/search/odin/guobk/data/model/{}/bert_model.ckpt'.format(bert_model)
 checkpoint_path = init_ckpt
-dict_path = '/search/odin/guobk/data/model/{}/vocab.txt'.format(bert_model)
+# dict_path = '/search/odin/guobk/data/model/{}/vocab.txt'.format(bert_model)
 
 
 # 加载并精简词表，建立分词器
