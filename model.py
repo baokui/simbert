@@ -38,11 +38,11 @@ class TotalLoss(Loss):
         labels = K.equal(idxs_1, idxs_2)
         labels = K.cast(labels, K.floatx())
         return labels
-def get_model(bert_model):
+def get_model(config_path,checkpoint_path,dict_path):
     # bert配置
-    config_path = '/search/odin/guobk/data/model/{}/bert_config.json'.format(bert_model)
-    checkpoint_path = '/search/odin/guobk/data/model/{}/bert_model.ckpt'.format(bert_model)
-    dict_path = '/search/odin/guobk/data/model/{}/vocab.txt'.format(bert_model)
+    # config_path = '/search/odin/guobk/data/model/{}/bert_config.json'.format(bert_model)
+    # checkpoint_path = '/search/odin/guobk/data/model/{}/bert_model.ckpt'.format(bert_model)
+    # dict_path = '/search/odin/guobk/data/model/{}/vocab.txt'.format(bert_model)
     token_dict, keep_tokens = load_vocab(
     dict_path=dict_path,
     simplified=True,
