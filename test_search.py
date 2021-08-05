@@ -32,15 +32,15 @@ with open(path_docs,'r') as f:
     D = json.load(f)
 with open(path_queries,'r') as f:
     Q = json.load(f)
-def emb(encoder,Sents, batch_size = 128):
+def emb(encoder,Sents, batch_size = 128,length=128):
     V = []
     X, S = [], []
     for t in Sents:
         x, s = tokenizer.encode(t)
         X.append(x)
         S.append(s)
-    X = sequence_padding(X)
-    S = sequence_padding(S)
+    X = sequence_padding(X,length=length)
+    S = sequence_padding(S,length=length)
     Z = encoder.predict([X, S],verbose=True)
     Z /= (Z**2).sum(axis=1, keepdims=True)**0.5
     return Z
@@ -67,7 +67,7 @@ def simScore(v_q,V_d0):
 maxQ = int(maxQ)
 Queries = Q[:maxQ]
 maxRec = 10
-SentsQ = [d['input'] for d in Queries]
+SentsQ = [d['content'] for d in Queries]
 SentsD = [d['content'] for d in D]
 V_q = emb(encoder,SentsQ)
 V_d = emb(encoder,SentsD)
