@@ -14,7 +14,7 @@ def getAcc(labels,preds,thr):
 # config_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/bert_config_re.json'
 # dict_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/vocab_re.txt'
 # checkpoint_path=None
-path_model,path_data,path_target,config_path,checkpoint_path,dict_path = sys.argv[1:]
+path_model,path_data,config_path,checkpoint_path,dict_path = sys.argv[1:]
 if checkpoint_path=='None':
     checkpoint_path = None
 model, seq2seq, encoder,tokenizer = get_model(config_path,checkpoint_path,dict_path)
@@ -57,5 +57,6 @@ s = ['model: '+path_model]
 s.append('num of pos and neg: %d, %d'%(nb_pos,nb_neg))
 s.append('auc: %0.4f'%auc)
 s.append('acc: %0.4f'%acc)
-with open(path_target,'w') as f:
-    f.write('\n'.join(s))
+print('\n'.join(s))
+# with open(path_target,'w') as f:
+#     f.write('\n'.join(s))
