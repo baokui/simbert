@@ -23,7 +23,7 @@ import sys
 maxlen = 32
 batch_size = 128
 steps_per_epoch = 30000
-epochs = 5
+epochs = 20
 alpha = 0.0001
 # corpus_path = '/search/odin/guobk/data/Tab3_train/Q-all-0726.txt'
 # bert_model = 'chinese_simbert_L-4_H-312_A-12'
