@@ -303,6 +303,7 @@ if __name__ == '__main__':
     evaluator = Evaluate()
     checkpointer = keras.callbacks.ModelCheckpoint(os.path.join(path_model, 'model_{epoch:03d}.h5'),
                                    verbose=1, save_weights_only=True, period=1)
+    eval('init')
     model.fit_generator(
         train_generator.forfit(),
         steps_per_epoch=steps_per_epoch,
