@@ -47,6 +47,13 @@ tokenizer = Tokenizer(token_dict, do_lower_case=True)
 
 with open(test_path,'r') as f:
     D = json.load(f)
+Sents = [d['input'] for d in D]
+for d in D:
+    Sents.extend(d['pos'])
+    Sents.extend(d['neg'])
+Sents = list(set(Sents))
+print('test set: %d'%len(Sents))
+
 def emb(encoder,Sents, batch_size = 128,length=128):
     V = []
     X, S = [], []
@@ -59,12 +66,6 @@ def emb(encoder,Sents, batch_size = 128,length=128):
     Z = encoder.predict([X, S],verbose=True)
     Z /= (Z**2).sum(axis=1, keepdims=True)**0.5
     return Z
-Sents = [d['input'] for d in D]
-for d in D:
-    Sents.extend(d['pos'])
-    Sents.extend(d['neg'])
-Sents = list(set(Sents))
-print('test set: %d'%len(Sents))
 
 def read_corpus():
     """读取语料，每行一个json
@@ -265,7 +266,7 @@ def eval(epoch):
     for d in D:
         labels.extend([1]*len(d['pos']))
         labels.extend([0]*len(d['neg']))
-        v0 = D_v[d['content']]
+        v0 = D_v[d['input']]
         v1 = [D_v[t] for t in d['pos']] + [D_v[t] for t in d['neg']]
         v1 = np.array(v1)
         s = v1.dot(v0)
