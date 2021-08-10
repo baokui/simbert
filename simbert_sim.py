@@ -59,7 +59,7 @@ def emb(encoder,Sents, batch_size = 128,length=128):
     Z = encoder.predict([X, S],verbose=True)
     Z /= (Z**2).sum(axis=1, keepdims=True)**0.5
     return Z
-Sents = [d['content'] for d in D]
+Sents = [d['input'] for d in D]
 for d in D:
     Sents.extend(d['pos'])
     Sents.extend(d['neg'])
