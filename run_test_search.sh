@@ -94,9 +94,9 @@ python -u eval.py $path_model $path_data $config_path $checkpoint_path $dict_pat
 
 export CUDA_VISIBLE_DEVICES="2"
 model='my_simbert_l4_sim-pretrain-mlmcse'
-path_model='/search/odin/guobk/data/'$model'/latest_model.weights'
-path_data='/search/odin/guobk/data/Tab3_test/test-20210804-testdata-5.json'
-config_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/bert_config.json'
-dict_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/vocab.txt'
+path_model='/search/odin/guobk/data/'$model'/model_009.h5'
+path_data='/search/odin/guobk/data/Tab3_test/test-20210804-testdata.json'
+config_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/bert_config_re.json'
+dict_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/vocab_re.txt'
 checkpoint_path=None
-python -u eval.py $path_model $path_data $config_path $checkpoint_path $dict_path >> log/eval-5-$model.log 2>&1 &
+python -u eval.py $path_model $path_data $config_path $checkpoint_path $dict_path $test_path >> log/eval-$model-2.log 2>&1 &

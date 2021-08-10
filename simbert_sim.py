@@ -28,7 +28,7 @@ alpha = 0.0001
 # corpus_path = '/search/odin/guobk/data/Tab3_train/Q-all-0726.txt'
 # bert_model = 'chinese_simbert_L-4_H-312_A-12'
 # path_model = '/search/odin/guobk/data/my_simbert_l4_sim'
-corpus_path,bert_model,path_model,init_ckpt,config_path,dict_path = sys.argv[1:]
+corpus_path,bert_model,path_model,init_ckpt,config_path,dict_path,test_path = sys.argv[1:]
 
 # bert配置
 # config_path = '/search/odin/guobk/data/model/{}/bert_config.json'.format(bert_model)
@@ -45,6 +45,24 @@ token_dict, keep_tokens = load_vocab(
 )
 tokenizer = Tokenizer(token_dict, do_lower_case=True)
 
+with open(test_path,'r') as f:
+    D = json.load(f)
+def emb(encoder,Sents, batch_size = 128,length=128):
+    V = []
+    X, S = [], []
+    for t in Sents:
+        x, s = tokenizer.encode(t)
+        X.append(x)
+        S.append(s)
+    X = sequence_padding(X,length=length)
+    S = sequence_padding(S,length=length)
+    Z = encoder.predict([X, S],verbose=True)
+    Z /= (Z**2).sum(axis=1, keepdims=True)**0.5
+    return Z
+Sents = [d['content'] for d in D]
+for d in D:
+    Sents.extend(d['pos'])
+    Sents.extend(d['neg'])
 
 def read_corpus():
     """读取语料，每行一个json
@@ -56,7 +74,7 @@ def read_corpus():
 
 with open(corpus_path,'r') as f:
     S = f.read().strip().split('\n')
-TrnData = [json.loads(f) for f in S]
+# TrnData = [json.loads(f) for f in S]
 
 def truncate(text):
     """截断句子
@@ -237,7 +255,28 @@ def just_show():
                 print(rr)
         except:
             pass
-
+def eval(epoch):
+    V_d = emb(encoder,Sents)
+    D_v = {Sents[i]:V_d[i] for i in range(len(Sents))}
+    labels = []
+    preds = []
+    for d in D:
+        labels.extend([1]*len(d['pos']))
+        labels.extend([0]*len(d['neg']))
+        v0 = D_v[d['content']]
+        v1 = [D_v[t] for t in d['pos']] + [D_v[t] for t in d['neg']]
+        v1 = np.array(v1)
+        s = v1.dot(v0)
+        preds.extend(list(s))
+    nb_pos = sum(labels)
+    nb_neg = len(labels) - nb_pos
+    auc = roc_auc_score(labels,preds)
+    acc = getAcc(labels,preds,thr=0.5)
+    s = ['model evaluation of epoch {} ...'.format(epoch)]
+    s.append('num of pos and neg: %d, %d'%(nb_pos,nb_neg))
+    s.append('auc: %0.4f'%auc)
+    s.append('acc: %0.4f'%acc)
+    print('\n'.join(s))
 
 class Evaluate(keras.callbacks.Callback):
     """评估模型
@@ -252,7 +291,8 @@ class Evaluate(keras.callbacks.Callback):
             self.lowest = logs['loss']
             model.save_weights(os.path.join(path_model,'latest_model.weights'))
         # 演示效果
-        just_show()
+        # just_show()
+        eval(epoch)
 
 def test():
     model.load_weights(os.path.join(path_model,'latest_model.weights'))
