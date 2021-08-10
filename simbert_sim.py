@@ -63,6 +63,8 @@ Sents = [d['input'] for d in D]
 for d in D:
     Sents.extend(d['pos'])
     Sents.extend(d['neg'])
+Sents = list(set(Sents))
+print('test set: %d'%len(Sents))
 
 def read_corpus():
     """读取语料，每行一个json
