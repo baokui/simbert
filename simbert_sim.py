@@ -16,6 +16,7 @@ from bert4keras.snippets import sequence_padding
 from bert4keras.snippets import text_segmentate
 from bert4keras.snippets import AutoRegressiveDecoder
 from bert4keras.snippets import uniout
+from sklearn.metrics import roc_auc_score
 import os
 import random
 import sys
