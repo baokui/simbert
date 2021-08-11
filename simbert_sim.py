@@ -259,6 +259,11 @@ def just_show():
                 print(rr)
         except:
             pass
+def getAcc(labels,preds,thr):
+    y = [int(t>=thr) for t in preds]
+    n = sum([y[i]==labels[i] for i in range(len(y))])
+    return n/len(y)
+    
 def eval(epoch):
     V_d = emb(encoder,Sents)
     D_v = {Sents[i]:V_d[i] for i in range(len(Sents))}
