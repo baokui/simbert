@@ -5,7 +5,9 @@ from bert4keras.snippets import sequence_padding
 import sys
 import random
 import os
-path_source,path_target = sys.argv[1:]
+path_source,path_target,path_model,config_path,checkpoint_path,dict_path = sys.argv[1:]
+if checkpoint_path=='None':
+    checkpoint_path = None
 def _is_chinese_char(char):
     """Checks whether CP is the codepoint of a CJK character."""
     # This defines a "chinese character" as anything in the CJK Unicode block:
@@ -81,12 +83,12 @@ def trim(S0):
             S.append(s)
     return S,R
 
-path_model="/search/odin/guobk/data/my_simbert_l4/model_269.h5"
-bert_model="chinese_simbert_L-4_H-312_A-12"
+# path_model="/search/odin/guobk/data/my_simbert_l4/model_269.h5"
+# bert_model="chinese_simbert_L-4_H-312_A-12"
 # path_target = '/search/odin/guobk/data/faiss_search/simbert/'
 if not os.path.exists(path_target):
     os.mkdir(path_target)
-model, seq2seq, encoder,tokenizer = get_model(bert_model)
+model, seq2seq, encoder,tokenizer = get_model(config_path,checkpoint_path,dict_path)
 model.load_weights(path_model)
 # Docs = getContent()
 with open(path_source,'r') as f:
