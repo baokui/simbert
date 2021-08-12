@@ -67,7 +67,7 @@ def simScore(v_q,V_d0):
 maxQ = int(maxQ)
 Queries = Q[:maxQ]
 maxRec = 10
-SentsQ = [d['content'] for d in Queries]
+SentsQ = [d['input'] for d in Queries]
 SentsD = [d['content'] for d in D]
 V_q = emb(encoder,SentsQ)
 V_d = emb(encoder,SentsD)
