@@ -93,7 +93,7 @@ model.load_weights(path_model)
 # Docs = getContent()
 with open(path_source,'r') as f:
     D0 = json.load(f)
-Docs = [[d['id'],d['content']] for d in D0]
+Docs = [[str(d['id']),d['content']] for d in D0]
 SentsD = [d[1] for d in Docs]
 SentsD,R = trim(SentsD)
 Queries = random.sample(Docs,1000)
