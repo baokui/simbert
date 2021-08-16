@@ -25,12 +25,12 @@ maxlen = 32
 batch_size = 128
 steps_per_epoch = 30000
 epochs = 20
-alpha = 0.0001
+# alpha = 0.0001
 # corpus_path = '/search/odin/guobk/data/Tab3_train/Q-all-0726.txt'
 # bert_model = 'chinese_simbert_L-4_H-312_A-12'
 # path_model = '/search/odin/guobk/data/my_simbert_l4_sim'
-corpus_path,bert_model,path_model,init_ckpt,config_path,dict_path,test_path = sys.argv[1:]
-
+corpus_path,bert_model,path_model,init_ckpt,config_path,dict_path,test_path,alpha = sys.argv[1:]
+alpha = float(alpha)
 # bert配置
 # config_path = '/search/odin/guobk/data/model/{}/bert_config.json'.format(bert_model)
 # checkpoint_path = '/search/odin/guobk/data/model/{}/bert_model.ckpt'.format(bert_model)
@@ -129,7 +129,7 @@ class TotalLoss(Loss):
         loss2 = self.compute_loss_of_similarity(inputs, mask)
         self.add_metric(loss1, name='seq2seq_loss')
         self.add_metric(loss2, name='similarity_loss')
-        return alpha*loss1 + loss2
+        return alpha*loss1 + (1-alpha)*loss2
     def compute_loss_of_seq2seq(self, inputs, mask=None):
         y_true, y_mask, _, y_pred = inputs
         y_true = y_true[:, 1:]  # 目标token_ids
@@ -263,7 +263,7 @@ def getAcc(labels,preds,thr):
     y = [int(t>=thr) for t in preds]
     n = sum([y[i]==labels[i] for i in range(len(y))])
     return n/len(y)
-    
+
 def eval(epoch):
     V_d = emb(encoder,Sents)
     D_v = {Sents[i]:V_d[i] for i in range(len(Sents))}

@@ -84,39 +84,36 @@ with open(path_target,'w') as f:
 
 def test0():
     import json
-    with open('/search/odin/guobk/data/Tab3_test/Q-20210629-tmp.json','r') as f:
+    with open('/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec.json','r') as f:
         D = json.load(f)
-    R = [['index','query','model-base (simcse-bert-12layer)','score-base','accuracy-base','model-simbert (4layer)','score-simbert','accuracy-simbert']]
-    k0 = 'rec_bert_cls_base'
-    k1 = 'rec_simbert_l4'
+    R = [['index','query','base','score','accuracy','base-dataEn','score','accuracy','flatnce','score','accuracy','pretrain','score','accuracy']]
+    keys = ['rec_my_simbert_l4','rec_my_simbert_l4_sim0809','rec_my_simbert_l4_sim0809-flatnce','rec_my_simbert_l4_sim-pretrain-mlmcse']
     ii = 0
-    maxRec = 10
+    maxRec = 5
     for d in D:
-        r0 = d[k0][:maxRec]
-        r1 = d[k1][:maxRec]
-        r0 = r0 + ['']*(maxRec-len(r0))
-        r1 = r1 + ['']*(maxRec-len(r1))
-        r = [[ii,d['input']]+r0[0].split('\t') + [''] + r1[0].split('\t') + ['']]
-        for i in range(1,maxRec):
-            if r0[i]!='':
-                r00 = r0[i].split('\t') + ['']
-            else:
-                r00 = ['', '', '']
-            if r1[i]!='':
-                r11 = r1[i].split('\t') + ['']
-            else:
-                r11 = ['','','']
-            r.append(['','']+r00+r11)
+        r00 = []
+        for k in keys:
+            r0 = d[k][:maxRec]
+            r0 = r0 + ['']*(maxRec-len(r0))
+            r00.append([t.split('\t')+[''] for t in r0])
+        r = [[ii,d['input']]]
+        for i in range(len(r00)):
+            r[0].extend(r00[i][0])
+        for j in range(1,maxRec):
+            rr = ['','']
+            for i in range(len(r00)):
+                rr.extend(r00[i][j])
+            r.append(rr)
         ii += 1
         R.extend(r)
+    # #####################################
+    # for i in range(len(R)):
+    #     if R[i][2] and R[i][2][0]=='*':
+    #         R[i][4] = 1
+    #         R[i][2] = R[i][2][1:]
+    #     if R[i][5] and R[i][5][0]=='*':
+    #         R[i][7] = 1
+    #         R[i][5] = R[i][5][1:]
     #####################################
-    for i in range(len(R)):
-        if R[i][2] and R[i][2][0]=='*':
-            R[i][4] = 1
-            R[i][2] = R[i][2][1:]
-        if R[i][5] and R[i][5][0]=='*':
-            R[i][7] = 1
-            R[i][5] = R[i][5][1:]
-    #####################################
-    write_excel('/search/odin/guobk/data/Tab3_test/Q-20210629-tmp.xls',R)
+    write_excel('/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec.json.xls',R)
                 
