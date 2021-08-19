@@ -158,3 +158,20 @@ dict_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/vocab.tx
 checkpoint_path=None
 maxQ=1000
 python -u test_search.py $path_model $tag $path_docs $path_queries $maxQ $path_target $config_path $checkpoint_path $dict_path >> log/test-search-$model.log 2>&1 &
+
+
+################################3
+export CUDA_VISIBLE_DEVICES="0"
+alpha=0.75
+tag='alpha_'$alpha
+model='my_simbert_l4_sim_alpha/'$tag
+path_model='/search/odin/guobk/data/'$model'/latest_model.weights'
+tag='rec_'$tag
+path_docs='/search/odin/guobk/data/vpaSupData/Docs-0809.json'
+path_queries='/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec.json'
+path_target='/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec.json'
+config_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/bert_config.json'
+dict_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/vocab.txt'
+checkpoint_path=None
+maxQ=1000
+python -u test_search.py $path_model $tag $path_docs $path_queries $maxQ $path_target $config_path $checkpoint_path $dict_path >> log/test-search-$tag.log 2>&1 &
