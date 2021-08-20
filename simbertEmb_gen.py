@@ -2,6 +2,7 @@ from model import get_model
 import json
 import numpy as np
 from bert4keras.snippets import sequence_padding
+from bert4keras.snippets import AutoRegressiveDecoder
 import sys
 import random
 import os
@@ -20,81 +21,7 @@ class SynonymsGenerator(AutoRegressiveDecoder):
         output_ids = self.random_sample([token_ids, segment_ids], n,
                                         topk)  # 基于随机采样
         return [tokenizer.decode(ids) for ids in output_ids]
-def _is_chinese_char(char):
-    """Checks whether CP is the codepoint of a CJK character."""
-    # This defines a "chinese character" as anything in the CJK Unicode block:
-    #   https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)
-    #
-    # Note that the CJK Unicode block is NOT all Japanese and Korean characters,
-    # despite its name. The modern Korean Hangul alphabet is a different block,
-    # as is Japanese Hiragana and Katakana. Those alphabets are used to write
-    # space-separated words, so they are not treated specially and handled
-    # like the all of the other languages.
-    cp = ord(char)
-    if ((cp >= 0x4E00 and cp <= 0x9FFF) or  #
-            (cp >= 0x3400 and cp <= 0x4DBF) or  #
-            (cp >= 0x20000 and cp <= 0x2A6DF) or  #
-            (cp >= 0x2A700 and cp <= 0x2B73F) or  #
-            (cp >= 0x2B740 and cp <= 0x2B81F) or  #
-            (cp >= 0x2B820 and cp <= 0x2CEAF) or
-            (cp >= 0xF900 and cp <= 0xFAFF) or  #
-            (cp >= 0x2F800 and cp <= 0x2FA1F)):  #
-        return True
-    return False
-def getContent():
-    '''
-    SQL数据库
-    host: mt.tugele.rds.sogou
-    port: 3306
-    user: tugele_new
-    password: tUgele2017OOT
-
-    表名字 ns_flx_wisdom_words_new
-    :return:
-    '''
-    import pymysql
-    conn = pymysql.connect(
-        host='mt.tugele.rds.sogou',
-        user='tugele_new',
-        password='tUgele2017OOT',
-        charset='utf8',
-        port  = 3306,
-        # autocommit=True,    # 如果插入数据，， 是否自动提交? 和conn.commit()功能一致。
-    )
-        # ****python, 必须有一个游标对象， 用来给数据库发送sql语句， 并执行的.
-        # 2. 创建游标对象，
-    cur = conn.cursor()
-    # 4). **************************数据库查询*****************************
-    # sqli = 'SELECT * FROM tugele.ns_flx_wisdom_words_new'
-    sqli = 'SELECT a.id,a.content,a.isDeleted,a.status FROM (tugele.ns_flx_wisdom_words_new a)'
-    cur.execute('SET NAMES utf8mb4')
-    cur.execute("SET CHARACTER SET utf8mb4")
-    cur.execute("SET character_set_connection=utf8mb4")
-    result = cur.execute(sqli)  # 默认不返回查询结果集， 返回数据记录数。
-    info = cur.fetchall()  # 3). 获取所有的查询结果
-    # print(info)
-    # print(len(info))
-    # 4. 关闭游标
-    cur.close()
-    # 5. 关闭连接
-    conn.close()
-    S = [[str(info[i][0]),info[i][1]] for i in range(len(info)) if info[i][2]==0 and info[i][3]==1]
-    return S
-def trim(S0):
-    S = []
-    R = []
-    for s in S0:
-        t = sum([_is_chinese_char(tt) for tt in s[:8]])
-        if t==0:
-            idx = 8
-            while idx < len(s) and not _is_chinese_char(s[idx]):
-                idx += 1
-            S.append(s[idx:])
-            R.append([s,s[idx:]])
-        else:
-            S.append(s)
-    return S,R
-def gen_synonyms(text,synonyms_generator,tokenizer,encoder, n=100, k=20):
+def gen_synonyms(text,synonyms_generator,tokenizer,encoder,seq2seq, n=100, k=20):
     """"含义： 产生sent的n个相似句，然后返回最相似的k个。
     做法：用seq2seq生成，并用encoder算相似度并排序。
     效果：
@@ -127,14 +54,19 @@ def gen_synonyms(text,synonyms_generator,tokenizer,encoder, n=100, k=20):
     argsort = np.dot(Z[1:], -Z[0]).argsort()
     return [r[i + 1] for i in argsort[:k]]
 
-
+# path_source="/search/odin/guobk/data/vpaSupData/Q-all-test-20210809.json"
+# path_target="/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-gen.json"
+# tags="ori,alpha_0,alpha_0.1,alpha_0.25,alpha_0.5,alpha_0.75"
+# path_models="/search/odin/guobk/data/my_simbert_l4/model_269.h5,/search/odin/guobk/data/my_simbert_l4_sim_alpha/alpha_0/latest_model.weights,/search/odin/guobk/data/my_simbert_l4_sim_alpha/alpha_0.1/latest_model.weights,/search/odin/guobk/data/my_simbert_l4_sim_alpha/alpha_0.25/latest_model.weights,/search/odin/guobk/data/my_simbert_l4_sim_alpha/alpha_0.5/latest_model.weights,/search/odin/guobk/data/my_simbert_l4_sim_alpha/alpha_0.75/latest_model.weights"
+# config_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/bert_config.json'
+# checkpoint_path="None"
+# dict_path='/search/odin/guobk/data/model/chinese_simbert_L-4_H-312_A-12/vocab.txt'
 path_source,path_target,path_models,tags,config_path,checkpoint_path,dict_path = sys.argv[1:]
+maxlen = 32
 path_models = path_models.split(',')
 tags = tags.split(',')
 if checkpoint_path=='None':
     checkpoint_path = None
-if not os.path.exists(path_target):
-    os.mkdir(path_target)
 Models = [get_model(config_path,checkpoint_path,dict_path) for i in range(len(path_models))]
 tokenizer = Models[0][3]
 synonyms_generator = SynonymsGenerator(
@@ -146,9 +78,14 @@ with open(path_source,'r') as f:
     Q = json.load(f)
 SentsQ = [d['input'] for d in Q[:100]]
 
-for s in SentsQ:
+R = []
+for s in SentsQ[len(R):]:
     d = {'input':s}
     for i in range(len(Models)):
         encoder = Models[i][2]
-        r = gen_synonyms(s, synonyms_generator,tokenizer,encoder, 10, 10)
+        seq2seq = Models[i][1]
+        r = gen_synonyms(s, synonyms_generator,tokenizer,encoder,seq2seq, 10, 10)
         d[tags[i]] = r
+    R.append(d)
+with open(path_target,'w') as f:
+    json.dump(R,f,ensure_ascii=False,indent=4)
