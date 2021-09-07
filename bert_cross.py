@@ -143,14 +143,17 @@ bert, encoder = create_model(config_path, init_ckpt, keep_tokens)
 encoder.summary()
 encoder.compile(loss=cross_loss,
                        optimizer=Adam(1e-5))
-parallel_encoder = multi_gpu_model(encoder, gpus=gpus)
-parallel_encoder.compile(loss=cross_loss,
-                       optimizer=Adam(1e-5))
+# parallel_encoder = multi_gpu_model(encoder, gpus=gpus)
+# parallel_encoder.compile(loss=cross_loss,
+#                        optimizer=Adam(1e-5))
 encoder.save(os.path.join(save_dir,'model_init.h5'))
 train_generator = data_generator(read_corpus(), batch_size*gpus)
 checkpointer = keras.callbacks.ModelCheckpoint(os.path.join(save_dir, 'model_{epoch:03d}.h5'),
                                    verbose=1, save_weights_only=False, period=1)
-parallel_encoder.fit(
+encoder.fit(
     train_generator.forfit(), steps_per_epoch=steps_per_epoch, epochs=nb_epochs,callbacks=[checkpointer]
 )
+# parallel_encoder.fit(
+#     train_generator.forfit(), steps_per_epoch=steps_per_epoch, epochs=nb_epochs,callbacks=[checkpointer]
+# )
 encoder.save(os.path.join(save_dir,'model_final.h5'))
