@@ -3,6 +3,7 @@ import json
 import numpy as np
 from collections import Counter
 from bert4keras.backend import keras, K
+from bert4keras.layers import *
 from bert4keras.layers import Loss
 from bert4keras.models import build_transformer_model
 from bert4keras.tokenizers import Tokenizer, load_vocab
@@ -81,41 +82,50 @@ class data_generator(DataGenerator):
                 batch_token_ids, batch_segment_ids = [], []
 
 
-encoder, model = create_model(config_path, init_ckpt, keep_tokens)
-encoder.summary()
-# encoder = keras.models.load_model(init_ckpt,compile = False)
-# encoder.compile(loss=cross_loss, optimizer=Adam(1e-5))
-checkpointer = keras.callbacks.ModelCheckpoint(os.path.join(save_dir, 'model_{epoch:03d}.h5'),
-                                   verbose=1, save_weights_only=False, period=1)
+# encoder, model = create_model(config_path, init_ckpt, keep_tokens)
+# encoder.summary()
+# # encoder = keras.models.load_model(init_ckpt,compile = False)
+# # encoder.compile(loss=cross_loss, optimizer=Adam(1e-5))
+# checkpointer = keras.callbacks.ModelCheckpoint(os.path.join(save_dir, 'model_{epoch:03d}.h5'),
+#                                    verbose=1, save_weights_only=False, period=1)
+# train_generator = data_generator(read_corpus(), batch_size*gpus)
+# # train_generator = data_generator(train_token_ids, batch_size*gpus)
+
+# parallel_encoder = multi_gpu_model(model, gpus=gpus)
+# parallel_encoder.compile(loss=cross_loss,
+#                        optimizer=Adam(1e-5))
+# encoder.save(os.path.join(save_dir,'model_init.h5'))
+# parallel_encoder.fit(
+#     train_generator.forfit(), steps_per_epoch=steps_per_epoch, epochs=nb_epochs,callbacks=[checkpointer]
+# )
+# encoder.save(os.path.join(save_dir,'model_final.h5'))
 train_generator = data_generator(read_corpus(), batch_size*gpus)
-# train_generator = data_generator(train_token_ids, batch_size*gpus)
-
-parallel_encoder = multi_gpu_model(model, gpus=gpus)
-parallel_encoder.compile(loss=cross_loss,
-                       optimizer=Adam(1e-5))
-encoder.save(os.path.join(save_dir,'model_init.h5'))
-parallel_encoder.fit(
-    train_generator.forfit(), steps_per_epoch=steps_per_epoch, epochs=nb_epochs,callbacks=[checkpointer]
-)
-encoder.save(os.path.join(save_dir,'model_final.h5'))
-
 iter = train_generator.forfit()
 x,y = next(iter)
 
 
 
 def cross_loss(y_true,y_pred):
-    outputs = y_pred[0]
-    outputB = Lambda(lambda x: x[1::2])(outputs)#取奇数行，即取B句的featureB
-    outputB = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputB)
-    queryEmb0 = Lambda(lambda x: x[::2])(outputs)
-    queryEmb = keras.layers.GlobalAveragePooling1D()(queryEmb0)
-    queryEmb = Lambda(lambda x: K.expand_dims(x,-2))(queryEmb)
+    outputs = y_pred
+    #outputB = Lambda(lambda x: x[1::2])(outputs)#取奇数行，即取B句的featureB
+    outputB = outputs[1::2]
+    #outputB = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputB)
+    outputB = K.l2_normalize(outputB, axis=1)
+    #queryEmb0 = Lambda(lambda x: x[::2])(outputs)
+    queryEmb0 = outputs[::2]
+    queryEmb = K.mean(queryEmb0,axis=1)
+    # queryEmb = keras.layers.GlobalAveragePooling1D()(queryEmb0)
+    #queryEmb = Lambda(lambda x: K.expand_dims(x,-2))(queryEmb)
+    queryEmb = K.expand_dims(queryEmb,-2)
     output = apply_main_layers(queryEmb, outputB, outputB,bert,index=4)
-    outputA_att = Lambda(lambda x: K.squeeze(x,axis=1))(output)
-    outputA_att = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputA_att)
+    # outputA_att = Lambda(lambda x: K.squeeze(x,axis=1))(output)
+    outputA_att = K.squeeze(output,axis=1)
+    # outputA_att = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputA_att)
+    outputA_att = K.l2_normalize(outputA_att,axis=1)
     y_predA = outputA_att
-    y_predB = Lambda(lambda x: K.squeeze(x,axis=1))(queryEmb)
+    # y_predB = Lambda(lambda x: K.squeeze(x,axis=1))(queryEmb)
+    return queryEmb
+    y_predB = K.squeeze(queryEmb,axis=1)
     b = K.cast(K.shape(y_predA)[0],dtype='int32')
     # 构造标签
     labels = K.eye(b)
@@ -129,7 +139,18 @@ def cross_loss(y_true,y_pred):
     )
     return K.mean(loss)
 
-bert, encoder = create_model(config_path, checkpoint_path, keep_tokens)
+bert, encoder = create_model(config_path, init_ckpt, keep_tokens)
 encoder.summary()
 encoder.compile(loss=cross_loss,
                        optimizer=Adam(1e-5))
+parallel_encoder = multi_gpu_model(encoder, gpus=gpus)
+parallel_encoder.compile(loss=cross_loss,
+                       optimizer=Adam(1e-5))
+encoder.save(os.path.join(save_dir,'model_init.h5'))
+train_generator = data_generator(read_corpus(), batch_size*gpus)
+checkpointer = keras.callbacks.ModelCheckpoint(os.path.join(save_dir, 'model_{epoch:03d}.h5'),
+                                   verbose=1, save_weights_only=False, period=1)
+parallel_encoder.fit(
+    train_generator.forfit(), steps_per_epoch=steps_per_epoch, epochs=nb_epochs,callbacks=[checkpointer]
+)
+encoder.save(os.path.join(save_dir,'model_final.h5'))
