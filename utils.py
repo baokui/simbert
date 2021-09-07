@@ -123,12 +123,14 @@ class TotalLoss(Loss):
 def cross_loss(y_true, y_pred):
     """用于SimCSE训练的loss
     """
+    b = K.cast(K.shape(y_pred)[0]/2,dtype='int32')
     # 构造标签
-    labels = K.eye(K.shape(y_pred)[0])
+    labels = K.eye(b)
     y_true = K.cast(labels, K.floatx())
     # 计算相似度
-    similarities = K.dot(y_pred, K.transpose(y_pred))  # 相似度矩阵
-    similarities = similarities - K.eye(K.shape(y_pred)[0]) * 1e12  # 排除对角线
+    y_predA = y_pred[:b]
+    y_predB = y_pred[b:]
+    similarities = K.dot(y_predA, K.transpose(y_predB))  # 相似度矩阵
     # similarities = similarities - K.eye(K.shape(y_pred)[0]) * 1e12  # 排除对角线
     similarities = similarities * 30  # scale
     loss = K.categorical_crossentropy(
@@ -160,7 +162,8 @@ def create_model(config_path, checkpoint_path, keep_tokens):
     outputA = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputA)
     outputB = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputB)
 
-    queryEmb = keras.layers.GlobalAveragePooling1D()(outputs[-1])
+    queryEmb0 = Lambda(lambda x: x[::2])(outputs[-1])
+    queryEmb = keras.layers.GlobalAveragePooling1D()(queryEmb0)
     queryEmb = Lambda(lambda x: K.expand_dims(x,-2))(queryEmb)
     output = apply_main_layers(queryEmb, outputB, outputB,bert,index=len(outputs))
     outputA_att = Lambda(lambda x: K.squeeze(x,axis=1))(output)
