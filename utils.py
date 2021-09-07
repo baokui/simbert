@@ -124,11 +124,11 @@ def cross_loss(y_true, y_pred):
     """用于SimCSE训练的loss
     """
     # 构造标签
-    embA, embA_att = y_pred
-    y_true = K.eye(K.shape(embA)[0])
-    y_true = K.cast(y_true, K.floatx())
+    labels = K.eye(K.shape(y_pred)[0])
+    y_true = K.cast(labels, K.floatx())
     # 计算相似度
-    similarities = K.dot(embA, K.transpose(embA_att))  # 相似度矩阵
+    similarities = K.dot(y_pred, K.transpose(y_pred))  # 相似度矩阵
+    similarities = similarities - K.eye(K.shape(y_pred)[0]) * 1e12  # 排除对角线
     # similarities = similarities - K.eye(K.shape(y_pred)[0]) * 1e12  # 排除对角线
     similarities = similarities * 30  # scale
     loss = K.categorical_crossentropy(
@@ -170,6 +170,7 @@ def create_model(config_path, checkpoint_path, keep_tokens):
 
     #outputs = TotalLoss([2, 3])(bert.model.inputs + bert.model.outputs + [outputA,outputA_att])
     outputs = [outputA,outputA_att]
+    outputs = Lambda(lambda x: K.concatenate(x, axis=0))(outputs)
 
     model = keras.models.Model(bert.model.inputs, outputs)
 
