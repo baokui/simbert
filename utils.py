@@ -157,28 +157,30 @@ def create_model(config_path, checkpoint_path, keep_tokens):
             count += 1
         except:
             break
-    outputA = Lambda(lambda x: x[::2])(bert.model.outputs[0])#取偶数行，即取A句的featureA
-    outputB = Lambda(lambda x: x[1::2])(outputs[-1])#取奇数行，即取B句的featureB
-    outputA = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputA)
-    outputB = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputB)
+    encoder = keras.models.Model(bert.model.inputs,outputs[-1])
+    return bert, encoder
+    # outputA = Lambda(lambda x: x[::2,:])(bert.model.outputs[0])#取偶数行，即取A句的featureA
+    # outputB = Lambda(lambda x: x[1::2])(outputs[-1])#取奇数行，即取B句的featureB
+    # outputA = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputA)
+    # outputB = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputB)
 
-    queryEmb0 = Lambda(lambda x: x[::2])(outputs[-1])
-    queryEmb = keras.layers.GlobalAveragePooling1D()(queryEmb0)
-    queryEmb = Lambda(lambda x: K.expand_dims(x,-2))(queryEmb)
-    output = apply_main_layers(queryEmb, outputB, outputB,bert,index=len(outputs))
-    outputA_att = Lambda(lambda x: K.squeeze(x,axis=1))(output)
-    outputA_att = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputA_att)
-    encoder = keras.models.Model(bert.model.inputs, [queryEmb, outputB])
-    #seq2seq = keras.models.Model(bert.model.inputs, bert.model.outputs[1])
+    # queryEmb0 = Lambda(lambda x: x[::2])(outputs[-1])
+    # queryEmb = keras.layers.GlobalAveragePooling1D()(queryEmb0)
+    # queryEmb = Lambda(lambda x: K.expand_dims(x,-2))(queryEmb)
+    # output = apply_main_layers(queryEmb, outputB, outputB,bert,index=len(outputs))
+    # outputA_att = Lambda(lambda x: K.squeeze(x,axis=1))(output)
+    # outputA_att = Lambda(lambda x: K.l2_normalize(x, axis=1))(outputA_att)
+    # encoder = keras.models.Model(bert.model.inputs, [queryEmb, outputB])
+    # #seq2seq = keras.models.Model(bert.model.inputs, bert.model.outputs[1])
 
-    #outputs = TotalLoss([2, 3])(bert.model.inputs + bert.model.outputs + [outputA,outputA_att])
-    outputs = [outputA,outputA_att]
-    outputs = Lambda(lambda x: K.concatenate(x, axis=0))(outputs)
+    # #outputs = TotalLoss([2, 3])(bert.model.inputs + bert.model.outputs + [outputA,outputA_att])
+    # outputs = [outputA,outputA_att]
+    # outputs = Lambda(lambda x: K.concatenate(x, axis=0))(outputs)
 
-    model = keras.models.Model(bert.model.inputs, outputs)
+    # model = keras.models.Model(bert.model.inputs, outputs)
 
-    # AdamW = extend_with_weight_decay(Adam, 'AdamW')
-    # optimizer = AdamW(learning_rate=2e-6, weight_decay_rate=0.01)
-    # model.compile(optimizer=optimizer)
-    # model.summary()
-    return encoder, model
+    # # AdamW = extend_with_weight_decay(Adam, 'AdamW')
+    # # optimizer = AdamW(learning_rate=2e-6, weight_decay_rate=0.01)
+    # # model.compile(optimizer=optimizer)
+    # # model.summary()
+    # return encoder, model
