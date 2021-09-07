@@ -84,18 +84,26 @@ with open(path_target,'w') as f:
 
 def test0():
     import json
-    with open('/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec.json','r') as f:
+    path_source = '/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec.json'
+    path_source = '/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec-bert-com.json'
+    with open(path_source,'r') as f:
         D = json.load(f)
-    R = [['index','query','base','score','accuracy','base-dataEn','score','accuracy','flatnce','score','accuracy','pretrain','score','accuracy']]
-    keys = ['rec_my_simbert_l4','rec_my_simbert_l4_sim0809','rec_my_simbert_l4_sim0809-flatnce','rec_my_simbert_l4_sim-pretrain-mlmcse']
+    R = [['index','query']]
+    keys = [k for k in D[0] if 'rec_' in k]
+    for k in keys:
+        R[0].extend([k,k+'-score',k+'-acc'])
+    # keys = ['rec_my_simbert_l4','rec_my_simbert_l4_sim0809','rec_my_simbert_l4_sim0809-flatnce','rec_my_simbert_l4_sim-pretrain-mlmcse']
     ii = 0
     maxRec = 5
+    T = []
     for d in D:
         r00 = []
+        t = {'input':d['input'],'rec':[]}
         for k in keys:
             r0 = d[k][:maxRec]
             r0 = r0 + ['']*(maxRec-len(r0))
-            r00.append([t.split('\t')+[''] for t in r0])
+            r00.append([t.split('\t')[:1]+['',''] for t in r0])
+            t['rec'].extend([t.split('\t')[0] for t in r0])
         r = [[ii,d['input']]]
         for i in range(len(r00)):
             r[0].extend(r00[i][0])
@@ -106,6 +114,8 @@ def test0():
             r.append(rr)
         ii += 1
         R.extend(r)
+        R.append(['' for _ in range(len(R[0]))])
+        T.append(t)
     # #####################################
     # for i in range(len(R)):
     #     if R[i][2] and R[i][2][0]=='*':
@@ -115,5 +125,107 @@ def test0():
     #         R[i][7] = 1
     #         R[i][5] = R[i][5][1:]
     #####################################
-    write_excel('/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec.json.xls',R)
-                
+    write_excel(path_source.replace('.json','.xls'),R)
+    
+    for t in T:
+        t['rec'] = list(set(t['rec']))
+    with open(path_source.replace('.json','-test.json'),'w') as f:
+        json.dump(T,f,ensure_ascii=False,indent=4)
+    
+    with open(path_source.replace('.json','-test.json'),'r') as f:
+        T = json.load(f)
+    T0 = {}
+    for t in T:
+        rec = [s for s in t['rec'] if s]
+        T0[t['input']] = [s[1:] for s in rec if s[0]=='0']
+    R = [['index','query']]
+    keys = [k for k in D[0] if 'rec_' in k]
+    for k in keys:
+        R[0].extend([k,k+'-score',k+'-acc'])
+    ii = 0
+    maxRec = 5
+    for d in D:
+        r00 = []
+        t = {'input':d['input'],'rec':[]}
+        for k in keys:
+            r0 = d[k][:maxRec]
+            r0 = r0 + ['']*(maxRec-len(r0))
+            r00.append([t.split('\t')[:1]+['',''] for t in r0])
+        for i in range(len(r00)):
+            for j in range(len(r00[i])):
+                if r00[i][j][0] in T0[d['input']]:
+                    r00[i][j][1] = 1
+                else:
+                    r00[i][j][1] = 0
+        r = [[ii,d['input']]]
+        for i in range(len(r00)):
+            r[0].extend(r00[i][0])
+        for j in range(1,maxRec):
+            rr = ['','']
+            for i in range(len(r00)):
+                rr.extend(r00[i][j])
+            r.append(rr)
+        ii += 1
+        R.extend(r)
+        R.append(['' for _ in range(len(R[0]))])
+        R[-1][3] = 0
+    write_excel(path_source.replace('.json','-test.xls'),R)
+def test1():
+    import json
+    path_source = '/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec-alpha.json'
+    with open(path_source,'r') as f:
+        D = json.load(f)
+    R = read_excel('/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec-bert-com.xls',1)
+    T = []
+    i = 3
+    while i < len(R):
+        if R[i][1]=='':
+            i+=1
+            continue
+        d = {'input':R[i][1]}
+        r = {}
+        for j in range(i,i+5):
+            for k in range(2,len(R[0]),3):
+                if R[j][k]!='':
+                    r[R[j][k]] = str(int(R[j][k+1]))
+        d['rec'] = r
+        i = j+1
+        T.append(d)
+    keys = [k for k in D[0].keys() if 'alpha' in k]
+    for  i in range(len(T)):
+        r = []
+        for k in keys:
+            r.extend([t.split('\t')[0] for t in D[i][k]])
+        r = list(set(r))
+        for t in r:
+            if t not in T[i]['rec']:
+                T[i]['rec'][t] = ''
+    with open('/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec-bert-com-test.json','w') as f:
+        json.dump(T,f,ensure_ascii=False,indent=4)
+    with open('/search/odin/guobk/data/vpaSupData/Q-all-test-20210809-rec-bert-com-test.json','r') as f:
+        T1 = json.load(f)
+    r = []
+    for k in keys:
+        r.extend([k,'score','acc'])
+    R = [r]
+    for i in range(len(T1)):
+        r0 = []
+        for j in range(5):
+            r = []
+            for k in keys:
+                if j > len(D[i][k]):
+                    r.extend(['','0',''])
+                else:
+                    s = D[i][k][j].split('\t')[0]
+                    if s in T1[i]['rec']:
+                        t = T1[i]['rec'][s]
+                        if t=='':
+                            t='0'
+                    else:
+                        t = '1'
+                        print(s)
+                    r.extend([s,int(t),''])
+            r0.append(r)
+        R.extend(r0)
+        R.append(['' for _ in range(len(R[0]))])
+    write_excel(path_source.replace('.json','-test2.xls'),R[:-1])

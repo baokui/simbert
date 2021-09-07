@@ -54,7 +54,7 @@ def getContent():
     cur = conn.cursor()
     # 4). **************************数据库查询*****************************
     # sqli = 'SELECT * FROM tugele.ns_flx_wisdom_words_new'
-    sqli = 'SELECT a.id,a.content,a.isDeleted,a.status FROM (tugele.ns_flx_wisdom_words_new a)'
+    sqli = 'SELECT a.id,a.content,a.isDeleted,a.status,a.userId FROM (tugele.ns_flx_wisdom_words_new a)'
     cur.execute('SET NAMES utf8mb4')
     cur.execute("SET CHARACTER SET utf8mb4")
     cur.execute("SET character_set_connection=utf8mb4")
@@ -66,7 +66,7 @@ def getContent():
     cur.close()
     # 5. 关闭连接
     conn.close()
-    S = [[str(info[i][0]),info[i][1]] for i in range(len(info)) if info[i][2]==0 and info[i][3]==1]
+    S = [[str(info[i][0]),info[i][1],info[i][-1]] for i in range(len(info)) if info[i][2]==0 and info[i][3]==1]
     return S
 def trim(S0):
     S = []
@@ -127,3 +127,21 @@ with open(os.path.join(path_target,'Docs.txt'),'w') as f:
     f.write('\n'.join(R_d))
 with open(os.path.join(path_target,'Queries.txt'),'w') as f:
     f.write('\n'.join(R_q))
+
+def test():
+    import requests
+    S = getContent()
+    D = {s[0]:s[1:] for s in S}
+    url = 'http://fast-similarity-search-test.thanos-lab.sogou/index'
+    data = {"id": "3", "querys": [{"k": 200, "value": []}]}
+    V_q = emb(encoder,['天凉了'])[0]
+    V_q = [float(t) for t in list(V_q)]
+    data['querys'][0]['value'] = V_q
+    res = requests.post(url,json=data)
+    r = res.json()['data']
+    r = [(k,1-r[k]/2) for k in r]
+    r = sorted(r,key=lambda x:-x[-1])
+    result = []
+    for rr in r:
+        if rr[0] in D:
+            result.append([rr[0]]+D[rr[0]]+[rr[1]])
