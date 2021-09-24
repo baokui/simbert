@@ -23,13 +23,14 @@ import sys
 # 基本信息
 maxlen = 32
 batch_size = 128
-steps_per_epoch = 30000
+# steps_per_epoch = 30000
 epochs = 20
 # alpha = 0.0001
 # corpus_path = '/search/odin/guobk/data/Tab3_train/Q-all-0726.txt'
 # bert_model = 'chinese_simbert_L-4_H-312_A-12'
 # path_model = '/search/odin/guobk/data/my_simbert_l4_sim'
-corpus_path,bert_model,path_model,init_ckpt,config_path,dict_path,test_path,alpha = sys.argv[1:]
+corpus_path,bert_model,path_model,init_ckpt,config_path,dict_path,test_path,alpha,nb_train_examples = sys.argv[1:]
+steps_per_epoch = int(int(nb_train_examples)*2/batch_size)
 alpha = float(alpha)
 # bert配置
 # config_path = '/search/odin/guobk/data/model/{}/bert_config.json'.format(bert_model)
