@@ -101,6 +101,9 @@ class data_generator(DataGenerator):
             synonyms = [text] + synonyms
             np.random.shuffle(synonyms)
             text, synonym = synonyms[:2]
+            while text==synonym:
+                np.random.shuffle(synonyms)
+                text, synonym = synonyms[:2]
             text, synonym = truncate(text), truncate(synonym)
             self.some_samples.append(text)
             if len(self.some_samples) > 1000:
