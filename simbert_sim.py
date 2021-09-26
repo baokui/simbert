@@ -132,7 +132,7 @@ class data_generator1(DataGenerator):
     """数据生成器
     """
     def __init__(self, *args, **kwargs):
-        super(data_generator, self).__init__(*args, **kwargs)
+        super(data_generator1, self).__init__(*args, **kwargs)
         self.some_samples = []
     def __iter__(self, random=False):
         batch_token_ids, batch_segment_ids = [], []
