@@ -29,7 +29,11 @@ epochs = 20
 # corpus_path = '/search/odin/guobk/data/Tab3_train/Q-all-0726.txt'
 # bert_model = 'chinese_simbert_L-4_H-312_A-12'
 # path_model = '/search/odin/guobk/data/my_simbert_l4_sim'
-corpus_path,bert_model,path_model,init_ckpt,config_path,dict_path,test_path,alpha,nb_train_examples = sys.argv[1:]
+corpus_path,bert_model,path_model,init_ckpt,config_path,dict_path,test_path,alpha,nb_train_examples = sys.argv[1:10]
+if len(sys.argv)<10:
+    train_gen = 0
+else:
+    train_gen = int(sys.argv[10])
 steps_per_epoch = int(int(nb_train_examples)*2/batch_size)
 alpha = float(alpha)
 # bert配置
@@ -124,6 +128,37 @@ class data_generator(DataGenerator):
                 yield [batch_token_ids, batch_segment_ids], None
                 batch_token_ids, batch_segment_ids = [], []
 
+class data_generator1(DataGenerator):
+    """数据生成器
+    """
+    def __init__(self, *args, **kwargs):
+        super(data_generator, self).__init__(*args, **kwargs)
+        self.some_samples = []
+    def __iter__(self, random=False):
+        batch_token_ids, batch_segment_ids = [], []
+        for is_end, d in self.sample(random):
+            text, synonyms = d['input'], d['click']
+            np.random.shuffle(synonyms)
+            synonym = synonyms[0]
+            text, synonym = truncate(text), truncate(synonym)
+            self.some_samples.append(text)
+            if len(self.some_samples) > 1000:
+                self.some_samples.pop(0)
+            token_ids, segment_ids = tokenizer.encode(
+                text, synonym, maxlen=maxlen * 2
+            )
+            batch_token_ids.append(token_ids)
+            batch_segment_ids.append(segment_ids)
+            token_ids, segment_ids = tokenizer.encode(
+                synonym, text, maxlen=maxlen * 2
+            )
+            batch_token_ids.append(token_ids)
+            batch_segment_ids.append(segment_ids)
+            if len(batch_token_ids) == self.batch_size or is_end:
+                batch_token_ids = sequence_padding(batch_token_ids)
+                batch_segment_ids = sequence_padding(batch_segment_ids)
+                yield [batch_token_ids, batch_segment_ids], None
+                batch_token_ids, batch_segment_ids = [], []
 
 class TotalLoss(Loss):
     """loss分两部分，一是seq2seq的交叉熵，二是相似度的交叉熵。
@@ -311,8 +346,12 @@ def test():
     model.load_weights(os.path.join(path_model,'latest_model.weights'))
     just_show()
 if __name__ == '__main__':
-
-    train_generator = data_generator(read_corpus(), batch_size)
+    if train_gen==0:
+        print('train_generator with simple mode')
+        train_generator = data_generator(read_corpus(), batch_size)
+    else:
+        print('train_generator with query-doc mode')
+        train_generator = data_generator1(read_corpus(), batch_size)
     evaluator = Evaluate()
     checkpointer = keras.callbacks.ModelCheckpoint(os.path.join(path_model, 'model_{epoch:03d}.h5'),
                                    verbose=1, save_weights_only=True, period=1)
