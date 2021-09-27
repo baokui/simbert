@@ -393,7 +393,7 @@ if __name__ == '__main__':
         print('train_generator with query-doc mode')
         train_generator = data_generator1(read_corpus(), batch_size)
     else:
-        print('train_generator with query-doc mode')
+        print('train_generator with query-doc mode: weight')
         train_generator = data_generator2(read_corpus(), batch_size)
     evaluator = Evaluate()
     checkpointer = keras.callbacks.ModelCheckpoint(os.path.join(path_model, 'model_{epoch:03d}.h5'),
