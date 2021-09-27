@@ -105,9 +105,9 @@ class data_generator(DataGenerator):
             synonyms = [text] + synonyms
             np.random.shuffle(synonyms)
             text, synonym = synonyms[:2]
-            while text==synonym:
-                np.random.shuffle(synonyms)
-                text, synonym = synonyms[:2]
+            # while text==synonym:
+            #     np.random.shuffle(synonyms)
+            #     text, synonym = synonyms[:2]
             text, synonym = truncate(text), truncate(synonym)
             self.some_samples.append(text)
             if len(self.some_samples) > 1000:
@@ -140,6 +140,46 @@ class data_generator1(DataGenerator):
             text, synonyms = d['input'], d['click']
             np.random.shuffle(synonyms)
             synonym = synonyms[0]
+            text, synonym = truncate(text), truncate(synonym)
+            self.some_samples.append(text)
+            if len(self.some_samples) > 1000:
+                self.some_samples.pop(0)
+            token_ids, segment_ids = tokenizer.encode(
+                text, synonym, maxlen=maxlen * 2
+            )
+            batch_token_ids.append(token_ids)
+            batch_segment_ids.append(segment_ids)
+            token_ids, segment_ids = tokenizer.encode(
+                synonym, text, maxlen=maxlen * 2
+            )
+            batch_token_ids.append(token_ids)
+            batch_segment_ids.append(segment_ids)
+            if len(batch_token_ids) == self.batch_size or is_end:
+                batch_token_ids = sequence_padding(batch_token_ids)
+                batch_segment_ids = sequence_padding(batch_segment_ids)
+                yield [batch_token_ids, batch_segment_ids], None
+                batch_token_ids, batch_segment_ids = [], []
+class data_generator2(DataGenerator):
+    """数据生成器
+    """
+    def __init__(self, *args, **kwargs):
+        super(data_generator2, self).__init__(*args, **kwargs)
+        self.some_samples = []
+    def __iter__(self, random=False):
+        batch_token_ids, batch_segment_ids = [], []
+        for is_end, d in self.sample(random):
+            text, synonyms = d['input'], d['click']
+            synonyms = [text] + synonyms
+            np.random.shuffle(synonyms)
+            text = synonyms[0]
+            j = 1
+            while text==synonyms[j]:
+                j+=1
+                if j>=len(synonyms):
+                    break
+            if j>=len(synonyms):
+                continue
+            synonym = synonyms[j]
             text, synonym = truncate(text), truncate(synonym)
             self.some_samples.append(text)
             if len(self.some_samples) > 1000:
@@ -349,9 +389,12 @@ if __name__ == '__main__':
     if train_gen==0:
         print('train_generator with simple mode')
         train_generator = data_generator(read_corpus(), batch_size)
-    else:
+    elif train_gen==1:
         print('train_generator with query-doc mode')
         train_generator = data_generator1(read_corpus(), batch_size)
+    else:
+        print('train_generator with query-doc mode')
+        train_generator = data_generator2(read_corpus(), batch_size)
     evaluator = Evaluate()
     checkpointer = keras.callbacks.ModelCheckpoint(os.path.join(path_model, 'model_{epoch:03d}.h5'),
                                    verbose=1, save_weights_only=True, period=1)
